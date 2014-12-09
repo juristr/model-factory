@@ -517,4 +517,107 @@ describe('A person model defined using modelFactory', function() {
 
     });
 
+    describe('having before and after request interceptors', function() {
+        var $httpBackend;
+
+        describe('when specifying an afterRequest interceptor', function(){
+            var afterRequestCb;
+
+            beforeEach(function() {
+                afterRequestCb = sinon.spy();
+
+                angular.module('test-module', ['modelFactory'])
+                    .factory('PersonModel', function($modelFactory) {
+                        return $modelFactory('/api/people', {
+                            actions: {
+
+                                'delete': {
+                                    afterRequest: afterRequestCb
+                                }
+
+                            }
+                        });
+                    });
+            });
+
+            beforeEach(angular.mock.module('test-module'));
+
+            beforeEach(inject(function(_PersonModel_, _$httpBackend_) {
+                PersonModel = _PersonModel_;
+                $httpBackend = _$httpBackend_;
+            }));
+
+            it('should invoke the interceptor on a successful response', function(){
+                var someModel = new PersonModel({
+                    id: 1
+                });
+
+                someModel.$destroy();
+
+                $httpBackend.expectDELETE('/api/people/1').respond(200, []);
+                $httpBackend.flush();
+
+                expect(afterRequestCb.called).toBeTruthy();
+            });
+
+            xit('should invoke the interceptor on a failing response', function(){
+                var someModel = new PersonModel({
+                    id: 1
+                });
+
+                someModel.$destroy();
+
+                $httpBackend.expectDELETE('/api/people/1').respond(500, []);
+                $httpBackend.flush();
+
+                expect(afterRequestCb.called).toBeTruthy();
+            });
+
+        });
+
+        describe('when specifying a beforeRequest interceptor', function(){
+            var beforeRequestCb;
+
+            beforeEach(function() {
+                beforeRequestCb = sinon.spy();
+
+                angular.module('test-module', ['modelFactory'])
+                    .factory('PersonModel', function($modelFactory) {
+                        return $modelFactory('/api/people', {
+                            actions: {
+
+                                'delete': {
+                                    beforeRequest: beforeRequestCb
+                                }
+
+                            }
+                        });
+                    });
+            });
+
+            beforeEach(angular.mock.module('test-module'));
+
+            beforeEach(inject(function(_PersonModel_, _$httpBackend_) {
+                PersonModel = _PersonModel_;
+                $httpBackend = _$httpBackend_;
+            }));
+
+            it('should invoke the interceptor', function(){
+                var someModel = new PersonModel({
+                    id: 1
+                });
+
+                someModel.$destroy();
+
+                $httpBackend.expectDELETE('/api/people/1').respond(200, []);
+                $httpBackend.flush();
+
+                expect(beforeRequestCb.called).toBeTruthy();
+            });
+
+        });
+
+
+    });
+
 });
